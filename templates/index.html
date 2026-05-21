@@ -31,16 +31,22 @@ button {
 <h1>⚽ 顔写真暗記アプリ</h1>
 
 <!-- =========================================================
-     チーム選択画面（最初に表示）
+     チーム選択画面
 ========================================================= -->
 <div id="teamScreen">
     <h2>チームを選択</h2>
+
+    <!-- 自動送りON/OFF（ここで事前設定） -->
+    <label>
+        <input type="checkbox" id="autoToggle">
+        自動送りON（5秒→2秒）
+    </label>
 </div>
 
 <hr>
 
 <!-- =========================================================
-     問題画面（最初は非表示）
+     問題画面
 ========================================================= -->
 <div id="quizScreen" style="display:none;">
 
@@ -48,22 +54,33 @@ button {
     <h2 id="name"></h2>
     <h3 id="timer"></h3>
 
-    <button onclick="startAuto()">自動送りON</button>
+    <!-- =====================================================
+         手動操作ボタン（自動時は非表示）
+    ===================================================== -->
+    <div id="manualControls">
+
+        <button onclick="showAnswer()">答えを見る</button>
+        <button onclick="next()">次へ</button>
+
+    </div>
+
+    <!-- 自動制御ボタン -->
+    <button onclick="startAuto()">自動スタート</button>
     <button onclick="stopAuto()">停止</button>
-    <button onclick="next()">次へ</button>
 
 </div>
 
 <script>
 
 // =========================================================
-// 状態管理（JS側がUI担当）
+// 状態管理
 // =========================================================
 let autoMode = false;
 let timer = null;
+let currentAnswer = "";
 
 // =========================================================
-// チーム一覧取得（フォルダから自動生成）
+// チーム一覧取得
 // =========================================================
 function loadTeams(){
 
@@ -115,12 +132,24 @@ function next(){
         }
 
         document.getElementById("img").src = data.image;
+
+        // 答えを保存（後で表示用）
+        currentAnswer = data.answer;
+
         document.getElementById("name").innerText = "";
     });
 }
 
 // =========================================================
-// カウントダウン表示
+// 答え表示
+// =========================================================
+function showAnswer(){
+
+    document.getElementById("name").innerText = currentAnswer;
+}
+
+// =========================================================
+// カウントダウン
 // =========================================================
 function countdown(sec){
 
@@ -142,22 +171,32 @@ function countdown(sec){
 }
 
 // =========================================================
-// 自動送り（5秒→2秒）
+// 自動送り開始
 // =========================================================
 function startAuto(){
 
     autoMode = true;
 
+    // 手動ボタン非表示
+    document.getElementById("manualControls").style.display = "none";
+
     function loop(){
 
         if(!autoMode) return;
 
+        let isAuto = document.getElementById("autoToggle").checked;
+
+        if(!isAuto) return;
+
+        // 5秒：名前なし
         countdown(5);
 
         setTimeout(() => {
 
             next();
-            document.getElementById("name").innerText = "表示中";
+
+            // 2秒：名前表示
+            showAnswer();
 
             countdown(2);
 
@@ -175,7 +214,11 @@ function startAuto(){
 // 停止
 // =========================================================
 function stopAuto(){
+
     autoMode = false;
+
+    // 手動ボタン復活
+    document.getElementById("manualControls").style.display = "block";
 }
 
 // =========================================================
