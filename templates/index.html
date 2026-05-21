@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>顔写真暗記アプリ</title>
+
+<style>
+body {
+    background: #1e272e;
+    color: white;
+    text-align: center;
+    font-family: Arial;
+}
+
+img {
+    width: 220px;
+    margin-top: 20px;
+}
+
+button {
+    font-size: 20px;
+    margin: 10px;
+    padding: 10px 20px;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>⚽ 顔写真暗記アプリ</h1>
+
+<img id="img" src="">
+<h2 id="name"></h2>
+
+<button onclick="startAuto()">自動送り開始</button>
+<button onclick="next()">次へ</button>
+
+<script>
+
+let timer = null;
+let showAnswer = false;
+
+function next(){
+
+    fetch("/next")
+    .then(res => res.json())
+    .then(data => {
+
+        if(data.end){
+            document.getElementById("name").innerText = "終了！";
+            return;
+        }
+
+        document.getElementById("img").src = data.image;
+
+        if(showAnswer){
+            document.getElementById("name").innerText = data.name;
+        } else {
+            document.getElementById("name").innerText = "";
+        }
+    });
+}
+
+// 自動送り
+function startAuto(){
+
+    let show = false;
+
+    timer = setInterval(() => {
+
+        if(!show){
+            // 5秒：名前なし
+            next();
+            show = true;
+
+        } else {
+            // 2秒：名前表示
+            fetch("/next")
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById("name").innerText = data.name;
+            });
+
+            show = false;
+        }
+
+    }, 5000);
+}
+
+</script>
+
+</body>
+</html>
