@@ -18,29 +18,41 @@ img {
 }
 
 button {
-    font-size: 20px;
-    margin: 10px;
-    padding: 10px 20px;
+    font-size: 18px;
+    margin: 5px;
+    padding: 10px;
 }
 </style>
-
 </head>
 
 <body>
 
 <h1>⚽ 顔写真暗記アプリ</h1>
 
-<img id="img" src="">
-<h2 id="name"></h2>
+<div>
+    <button onclick="startTeam('team1')">team1</button>
+    <button onclick="startTeam('team2')">team2</button>
+</div>
 
-<button onclick="startAuto()">自動送り開始</button>
+<hr>
+
+<img id="img">
+<h2 id="name"></h2>
+<h3 id="timer"></h3>
+
+<button onclick="startAuto()">自動送りON</button>
+<button onclick="stopAuto()">停止</button>
 <button onclick="next()">次へ</button>
 
 <script>
 
 let timer = null;
-let showAnswer = false;
+let countdown = null;
+let autoMode = false;
 
+// -------------------------
+// 次の画像
+// -------------------------
 function next(){
 
     fetch("/next")
@@ -48,44 +60,87 @@ function next(){
     .then(data => {
 
         if(data.end){
-            document.getElementById("name").innerText = "終了！";
+            document.getElementById("name").innerText = "終了";
             return;
         }
 
         document.getElementById("img").src = data.image;
-
-        if(showAnswer){
-            document.getElementById("name").innerText = data.name;
-        } else {
-            document.getElementById("name").innerText = "";
-        }
+        document.getElementById("name").innerText = "";
     });
 }
 
-// 自動送り
-function startAuto(){
+// -------------------------
+// カウントダウン
+// -------------------------
+function startCountdown(sec){
 
-    let show = false;
+    let t = sec;
 
-    timer = setInterval(() => {
+    document.getElementById("timer").innerText = t;
 
-        if(!show){
-            // 5秒：名前なし
-            next();
-            show = true;
+    clearInterval(countdown);
 
-        } else {
-            // 2秒：名前表示
-            fetch("/next")
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById("name").innerText = data.name;
-            });
+    countdown = setInterval(() => {
 
-            show = false;
+        t--;
+        document.getElementById("timer").innerText = t;
+
+        if(t <= 0){
+            clearInterval(countdown);
         }
 
-    }, 5000);
+    }, 1000);
+}
+
+// -------------------------
+// 自動送り（5秒→2秒）
+// -------------------------
+function startAuto(){
+
+    autoMode = true;
+
+    function loop(){
+
+        if(!autoMode) return;
+
+        startCountdown(5);
+
+        setTimeout(() => {
+
+            next();
+
+            document.getElementById("name").innerText = "表示中";
+
+            startCountdown(2);
+
+            setTimeout(() => {
+
+                loop();
+
+            }, 2000);
+
+        }, 5000);
+    }
+
+    loop();
+}
+
+// -------------------------
+// 停止
+// -------------------------
+function stopAuto(){
+    autoMode = false;
+}
+
+// -------------------------
+// チーム選択
+// -------------------------
+function startTeam(team){
+
+    fetch("/team/" + team)
+    .then(() => {
+        next();
+    });
 }
 
 </script>
