@@ -67,24 +67,22 @@ def select_team(team_name):
 @app.route("/next")
 def next_image():
 
-    global current_index
+    global image_files, current_index
 
-    # 終了判定
     if current_index >= len(image_files):
-        return jsonify({"end": True})
+        return {"end": True}
 
     path = image_files[current_index]
 
-    # ファイル名＝選手名
-    name = os.path.splitext(os.path.basename(path))[0]
+    filename = os.path.basename(path)
+    name = os.path.splitext(filename)[0]
 
     current_index += 1
 
-    return jsonify({
-        "image": path,
-        "name": name
-    })
-
+    return {
+        "image": path,   # ←これでOK（そのまま使う）
+        "answer": name
+    }
 
 # =========================================================
 # 画面

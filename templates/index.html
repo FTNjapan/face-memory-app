@@ -61,6 +61,7 @@ button {
 
         <button onclick="showAnswer()">答えを見る</button>
         <button onclick="next()">次へ</button>
+        <button onclick="backToTeam()">チーム選択へ戻る</button>
 
     </div>
 
@@ -219,6 +220,27 @@ function stopAuto(){
 
     // 手動ボタン復活
     document.getElementById("manualControls").style.display = "block";
+}
+
+// =========================================================
+// チーム選択へ戻る
+// =========================================================
+function backToTeam(){
+
+    // 自動停止
+    autoMode = false;
+
+    // タイマー停止
+    clearInterval(timer);
+
+    // 画面切替
+    document.getElementById("quizScreen").style.display = "none";
+    document.getElementById("teamScreen").style.display = "block";
+
+    // 画像リセット
+    document.getElementById("img").src = "";
+    document.getElementById("name").innerText = "";
+    document.getElementById("timer").innerText = "";
 }
 
 // =========================================================
