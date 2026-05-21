@@ -4,13 +4,11 @@
 <head>
 
 <meta charset="UTF-8">
-
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>顔写真暗記アプリ</title>
 
-<!-- CSS読み込み -->
+<!-- CSS -->
 <link rel="stylesheet"
       href="{{ url_for('static', filename='style.css') }}">
 
@@ -18,311 +16,68 @@
 
 <body>
 
-<!-- =========================================================
-     全体ラッパー
-========================================================= -->
 <div id="app">
 
-    <!-- =====================================================
-         タイトル
-    ====================================================== -->
     <h1>⚽ 顔写真暗記アプリ</h1>
 
-    <!-- =====================================================
+    <!-- =========================
          チーム選択画面
-    ====================================================== -->
+    ========================== -->
     <div id="teamScreen">
 
         <h2>チームを選択</h2>
 
-        <!-- 自動送り設定 -->
-        <label class="toggleLabel">
-
+        <!-- 自動送りON/OFF -->
+        <label>
             <input type="checkbox" id="autoToggle">
-
             自動送りON（5秒→2秒）
-
         </label>
 
-        <!-- チームボタン生成エリア -->
         <div id="teamButtons"></div>
 
     </div>
 
-    <!-- =====================================================
+    <!-- =========================
          問題画面
-    ====================================================== -->
+    ========================== -->
     <div id="quizScreen" style="display:none;">
 
-        <!-- 画像 -->
         <img id="img">
 
-        <!-- 名前 -->
         <h2 id="name"></h2>
-
-        <!-- タイマー -->
         <h3 id="timer"></h3>
 
-        <!-- =================================================
-             手動操作
-        ================================================== -->
+        <!-- 手動操作 -->
         <div id="manualControls">
 
-            <button onclick="showAnswer()">
-                答えを見る
+            <button onclick="showAnswer()">答えを見る</button>
+            <button onclick="nextImage()">次へ</button>
+
+        </div>
+
+        <!-- 自動操作 -->
+        <div id="autoControls">
+
+            <button id="startAutoBtn" onclick="startAuto()">
+                自動スタート
             </button>
 
-            <button onclick="nextImage()">
-                次へ
+            <button id="stopAutoBtn" onclick="stopAuto()">
+                停止
             </button>
 
         </div>
 
-        <!-- =================================================
-             共通操作
-        ================================================== -->
         <div>
-
-            <button onclick="startAuto()">
-                自動スタート
-            </button>
-
-            <button onclick="stopAuto()">
-                停止
-            </button>
-
-            <button onclick="backToTeam()">
-                チーム選択へ戻る
-            </button>
-
+            <button onclick="backToTeam()">チーム選択へ戻る</button>
         </div>
 
     </div>
 
 </div>
 
-<script>
-
-// =========================================================
-// 状態管理
-// =========================================================
-let autoMode = false;
-let timer = null;
-let currentAnswer = "";
-
-// =========================================================
-// チーム一覧取得
-// =========================================================
-function loadTeams(){
-
-    fetch("/teams")
-
-    .then(res => res.json())
-
-    .then(data => {
-
-        const area =
-            document.getElementById("teamButtons");
-
-        area.innerHTML = "";
-
-        data.forEach(team => {
-
-            let btn =
-                document.createElement("button");
-
-            btn.innerText = team;
-
-            btn.onclick = () => startTeam(team);
-
-            area.appendChild(btn);
-        });
-    });
-}
-
-// =========================================================
-// チーム開始
-// =========================================================
-function startTeam(team){
-
-    fetch("/team/" + team)
-
-    .then(() => {
-
-        // 画面切替
-        document.getElementById("teamScreen")
-            .style.display = "none";
-
-        document.getElementById("quizScreen")
-            .style.display = "flex";
-
-        // 最初の画像
-        nextImage();
-
-        // 自動ONなら開始
-        if(document.getElementById("autoToggle").checked){
-
-            startAuto();
-        }
-    });
-}
-
-// =========================================================
-// 次の画像
-// =========================================================
-function nextImage(){
-
-    fetch("/next")
-
-    .then(res => res.json())
-
-    .then(data => {
-
-        // 終了
-        if(data.end){
-
-            document.getElementById("name")
-                .innerText = "終了";
-
-            return;
-        }
-
-        // 画像表示
-        document.getElementById("img").src =
-            data.image;
-
-        // 答え保存
-        currentAnswer = data.answer;
-
-        // 名前非表示
-        document.getElementById("name")
-            .innerText = "";
-    });
-}
-
-// =========================================================
-// 答え表示
-// =========================================================
-function showAnswer(){
-
-    document.getElementById("name")
-        .innerText = currentAnswer;
-}
-
-// =========================================================
-// カウントダウン
-// =========================================================
-function countdown(sec){
-
-    let t = sec;
-
-    document.getElementById("timer")
-        .innerText = t;
-
-    clearInterval(timer);
-
-    timer = setInterval(() => {
-
-        t--;
-
-        document.getElementById("timer")
-            .innerText = t;
-
-        if(t <= 0){
-
-            clearInterval(timer);
-        }
-
-    }, 1000);
-}
-
-// =========================================================
-// 自動送り開始
-// =========================================================
-function startAuto(){
-
-    autoMode = true;
-
-    // 手動ボタン非表示
-    document.getElementById("manualControls")
-        .style.display = "none";
-
-    function loop(){
-
-        if(!autoMode) return;
-
-        // 5秒
-        countdown(5);
-
-        setTimeout(() => {
-
-            if(!autoMode) return;
-
-            // 答え表示
-            showAnswer();
-
-            // 2秒
-            countdown(2);
-
-            setTimeout(() => {
-
-                if(!autoMode) return;
-
-                // 次の画像
-                nextImage();
-
-                loop();
-
-            }, 2000);
-
-        }, 5000);
-    }
-
-    loop();
-}
-
-// =========================================================
-// 自動停止
-// =========================================================
-function stopAuto(){
-
-    autoMode = false;
-
-    clearInterval(timer);
-
-    document.getElementById("manualControls")
-        .style.display = "block";
-}
-
-// =========================================================
-// チーム選択へ戻る
-// =========================================================
-function backToTeam(){
-
-    // 自動停止
-    stopAuto();
-
-    // 画面切替
-    document.getElementById("quizScreen")
-        .style.display = "none";
-
-    document.getElementById("teamScreen")
-        .style.display = "block";
-
-    // リセット
-    document.getElementById("img").src = "";
-
-    document.getElementById("name").innerText = "";
-
-    document.getElementById("timer").innerText = "";
-}
-
-// =========================================================
-// 起動時
-// =========================================================
-window.onload = loadTeams;
-
-</script>
+<!-- JSは外部化 -->
+<script src="{{ url_for('static', filename='app.js') }}"></script>
 
 </body>
 </html>
